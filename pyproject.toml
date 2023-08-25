@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kumade"
+authors = [
+    {name = "yamaimo", email = "hello@yamaimo.dev"},
+]
+description = "A make-like build utility for Python."
+readme = "README.md"
+license = {text = "MIT License"}
+dependencies = [
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/yamaimo/kumade"
+
+[project.optional-dependencies]
+develop = [
+    "pysen",
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "kumade.__version__"}
+
+[tool.setuptools]
+packages = ["kumade"]
+
+[tool.pysen]
+version = "0.10"
+
+[tool.pysen.lint]
+enable_black = true
+enable_flake8 = true
+enable_isort = true
+enable_mypy = true
+mypy_preset = "strict"
+line_length = 88
+py_version = "py311"
+
+[[tool.pysen.lint.mypy_targets]]
+paths = ["."]
