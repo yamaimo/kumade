@@ -24,6 +24,7 @@ develop = [
     "flake8",
     "isort",
     "mypy",
+    "coverage",
 ]
 
 [tool.setuptools.dynamic]
@@ -46,3 +47,6 @@ py_version = "py311"
 
 [[tool.pysen.lint.mypy_targets]]
 paths = ["."]
+
+[tool.pysen.lint.source]
+excludes = ["Kumadefile.py"]
