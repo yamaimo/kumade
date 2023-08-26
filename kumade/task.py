@@ -16,5 +16,9 @@ class Task:
     dependencies: List[TaskName]
     help: Optional[str]
 
+    @property
+    def has_help(self) -> bool:
+        return self.help is not None
+
     def run(self) -> None:
         self.procedure(*self.args)
