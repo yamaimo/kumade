@@ -6,7 +6,10 @@ from time import sleep
 
 import kumade as ku
 
+
 # demo -----------------------------------------------------
+
+# simple task
 
 @ku.task("greet")
 @ku.help("Greet all.")
@@ -16,6 +19,8 @@ def greeting() -> None:
         "A make-like build utility for Python.\n"
         "Enjoy!"
     )
+
+# create task dynamically
 
 for i in range(6):
     @ku.task(f"count{i}")
@@ -34,6 +39,30 @@ for i in range(6):
 def countdown() -> None:
     pass
 
+# file creation
+
+project_dir = Path(__file__).parent
+demo_dir = project_dir / "demo"
+demo_file = demo_dir / "demo.txt"
+
+@ku.task("build")
+@ku.depend(demo_file)
+@ku.help("Create demo file.")
+def build() -> None:
+    pass
+
+@ku.file(demo_file)
+@ku.depend(demo_dir)
+def create_demo_file() -> None:
+    demo_file.touch()
+
+ku.directory(demo_dir)
+
+# clean
+
+ku.clean("clean", [demo_dir], help="Clean demo file.")
+
+
 # format, lint, and test -----------------------------------
 
 @ku.task("format")
@@ -51,9 +80,9 @@ def lint() -> None:
 def test() -> None:
     subprocess.run(["python", "-m", "unittest"])
 
+
 # coverage -------------------------------------------------
 
-project_dir = Path(__file__).parent
 coverage_path = project_dir / ".coverage"
 kumade_dir = project_dir / "kumade"
 tests_dir = project_dir / "tests"
@@ -76,5 +105,4 @@ def make_coverage() -> None:
 def report_coverage() -> None:
     subprocess.run(["coverage", "report", "-m"])
 
-clean_coverage = ku.create_clean_task("clean_coverage", "Clean coverage files.")
-clean_coverage.append(coverage_path)
+ku.clean("clean_coverage", [coverage_path], help="Clean coverage files.")
