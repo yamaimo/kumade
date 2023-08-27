@@ -29,6 +29,10 @@ pip install -e .[develop]
 
 ### Format and Lint
 
-To format, execute `pysen run format`.
+To format, execute `kumade format`.
 
-To lint, execute `pysen run lint`.
+To lint, execute `kumade lint`.
+
+### Coverage
+
+To measure coverage and report it, execute `kumade report_coverage`.
