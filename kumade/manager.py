@@ -16,19 +16,20 @@ class TaskManager:
 
     def __init__(self) -> None:
         self.__task: Dict[TaskName, Task] = {}
-        self.__default_task_name: Optional[TaskName] = None
+        self.__default_task_name: Optional[str] = None
 
     @property
-    def default_task_name(self) -> Optional[TaskName]:
+    def default_task_name(self) -> Optional[str]:
         return self.__default_task_name
 
     @default_task_name.setter
-    def default_task_name(self, value: Optional[TaskName]) -> None:
+    def default_task_name(self, value: Optional[str]) -> None:
         self.__default_task_name = value
 
     def register(self, task: Task) -> None:
         name = task.name
-        assert name not in self.__task, f"Task {name} already exists."
+        if name in self.__task:
+            raise RuntimeError(f"Task {name} already exists.")
         self.__task[name] = task
 
     def find(self, name: TaskName) -> Optional[Task]:

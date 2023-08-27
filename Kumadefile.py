@@ -9,6 +9,10 @@ import kumade as ku
 
 # demo -----------------------------------------------------
 
+# default
+
+ku.set_default("greet")
+
 # simple task
 
 @ku.task("greet")
@@ -98,6 +102,7 @@ def coverage() -> None:
 @ku.depend(*python_sources)
 def make_coverage() -> None:
     subprocess.run(["coverage", "run", "-m", "unittest"])
+    coverage_path.touch()
 
 @ku.task("report_coverage")
 @ku.depend("coverage")

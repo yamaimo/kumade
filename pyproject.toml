@@ -27,6 +27,9 @@ develop = [
     "coverage",
 ]
 
+[project.scripts]
+kumade = "kumade.cli:main"
+
 [tool.setuptools.dynamic]
 version = {attr = "kumade.__version__"}
 

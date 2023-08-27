@@ -1,5 +1,6 @@
 # Task runner
 
+from pathlib import Path
 from typing import List, Set
 
 from kumade.manager import TaskManager
@@ -11,15 +12,16 @@ class TaskRunner:
         self.__manager = TaskManager.get_instance()
         self.__verbose = verbose
 
-    def run(self, target: TaskName) -> None:
-        queue = self.__create_queue(target)
+    def run(self, targets: List[TaskName]) -> None:
+        queue = self.__create_queue(targets)
         self.__execute_queue(queue)
 
-    def __create_queue(self, target: TaskName) -> List[Task]:
+    def __create_queue(self, targets: List[TaskName]) -> List[Task]:
         queue: List[Task] = []
         visited: Set[TaskName] = set()
         added: Set[TaskName] = set()
-        self.__create_queue_recursively(target, queue, visited, added)
+        for target in targets:
+            self.__create_queue_recursively(target, queue, visited, added)
         return queue
 
     def __create_queue_recursively(
@@ -33,11 +35,15 @@ class TaskRunner:
             if target in added:
                 return
             else:
-                raise ValueError(f"Target {target} is dependent from its dependencies.")
+                raise RuntimeError(f"Target {target} has circular dependency.")
 
         task = self.__manager.find(target)
         if task is None:
-            raise ValueError(f"Target {target} is not found.")
+            # NOTE: A path in dependencies need not be a task.
+            if isinstance(target, Path):
+                return
+            else:
+                raise RuntimeError(f"Target {target} is not found.")
 
         visited.add(target)
 
@@ -50,5 +56,5 @@ class TaskRunner:
     def __execute_queue(self, queue: List[Task]) -> None:
         for task in queue:
             if self.__verbose:
-                print(task.name)
+                print(f"[Task] {task.name}")
             task.run()

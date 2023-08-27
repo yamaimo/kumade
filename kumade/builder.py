@@ -61,9 +61,9 @@ class FileTaskBuilder(ArgsConfigurable, DependenciesConfigurable):
         self.__dependencies = dependencies
 
     def build(self, procedure: TaskProcedure) -> Task:
-        def procedure_with_file_check(args: List[Any]) -> None:
+        def procedure_with_file_check(*args: Any) -> None:
             if not self.__path.exists():
-                return procedure(args)
+                return procedure(*args)
             if self.__path.is_dir():
                 return
 
@@ -72,7 +72,7 @@ class FileTaskBuilder(ArgsConfigurable, DependenciesConfigurable):
                 if isinstance(dep, Path) and dep.is_file():
                     dep_timestamp = dep.stat().st_mtime
                     if timestamp < dep_timestamp:
-                        return procedure(args)
+                        return procedure(*args)
             return
 
         return Task(

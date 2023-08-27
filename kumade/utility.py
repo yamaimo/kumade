@@ -8,6 +8,11 @@ from kumade.manager import TaskManager
 from kumade.task import TaskName
 
 
+def set_default(name: str) -> None:
+    manager = TaskManager.get_instance()
+    manager.default_task_name = name
+
+
 def clean(
     name: str,
     paths: List[Path],
