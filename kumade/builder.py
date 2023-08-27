@@ -2,12 +2,27 @@
 
 import shutil
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Protocol
 
 from kumade.task import Task, TaskName, TaskProcedure
 
 
-class TaskBuilder:
+class ArgsConfigurable(Protocol):
+    def set_args(self, args: List[Any]) -> None:
+        ...
+
+
+class DependenciesConfigurable(Protocol):
+    def set_dependencies(self, dependencies: List[TaskName]) -> None:
+        ...
+
+
+class HelpConfigurable(Protocol):
+    def set_help(self, help: str) -> None:
+        ...
+
+
+class TaskBuilder(ArgsConfigurable, DependenciesConfigurable, HelpConfigurable):
     def __init__(self, name: str) -> None:
         self.__name = name
         self.__args: List[Any] = []
@@ -33,21 +48,17 @@ class TaskBuilder:
         )
 
 
-class FileTaskBuilder:
+class FileTaskBuilder(ArgsConfigurable, DependenciesConfigurable):
     def __init__(self, path: Path) -> None:
         self.__path = path
         self.__args: List[Any] = []
         self.__dependencies: List[TaskName] = []
-        self.__help: Optional[str] = None
 
     def set_args(self, args: List[Any]) -> None:
         self.__args = args
 
     def set_dependencies(self, dependencies: List[TaskName]) -> None:
         self.__dependencies = dependencies
-
-    def set_help(self, help: str) -> None:
-        self.__help = help
 
     def build(self, procedure: TaskProcedure) -> Task:
         def procedure_with_file_check(args: List[Any]) -> None:
@@ -69,11 +80,11 @@ class FileTaskBuilder:
             procedure_with_file_check,
             self.__args,
             self.__dependencies,
-            self.__help,
+            None,
         )
 
 
-class CleanTaskBuilder:
+class CleanTaskBuilder(DependenciesConfigurable, HelpConfigurable):
     def __init__(self, name: str) -> None:
         self.__name = name
         self.__dependencies: List[TaskName] = []
