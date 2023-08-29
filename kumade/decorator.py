@@ -27,7 +27,7 @@ class TaskConfig(Generic[T]):
 
     # NOTE: Make TaskConfig Callable in order to use as Decorator
     def __call__(self) -> None:
-        pass
+        pass  # pragma: no cover
 
     def setup_builder(self, builder: T) -> TaskProcedure:
         if isinstance(self.__base, TaskConfig):

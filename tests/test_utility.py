@@ -74,3 +74,7 @@ class TestUtility(TestCase):
                 registered.run()
 
                 self.assertTrue(test_dir.exists())
+
+                # check mkdir() is not called if it already exists.
+                # (if mkdir() is called again, an error will occur.)
+                registered.run()

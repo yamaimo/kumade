@@ -9,17 +9,17 @@ from kumade.task import Task, TaskName, TaskProcedure
 
 class ArgsConfigurable(Protocol):
     def set_args(self, args: List[Any]) -> None:
-        ...
+        ...  # pragma: no cover
 
 
 class DependenciesConfigurable(Protocol):
     def set_dependencies(self, dependencies: List[TaskName]) -> None:
-        ...
+        ...  # pragma: no cover
 
 
 class HelpConfigurable(Protocol):
     def set_help(self, help: str) -> None:
-        ...
+        ...  # pragma: no cover
 
 
 class TaskBuilder(ArgsConfigurable, DependenciesConfigurable, HelpConfigurable):
