@@ -25,6 +25,9 @@ develop = [
     "isort",
     "mypy",
     "coverage",
+    "build",
+    "twine",
+    "types-docutils",
 ]
 
 [project.scripts]

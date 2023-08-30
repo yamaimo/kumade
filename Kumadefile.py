@@ -111,3 +111,39 @@ def report_coverage() -> None:
     subprocess.run(["coverage", "report", "-m"])
 
 ku.clean("clean_coverage", [coverage_path], help="Clean coverage files.")
+
+
+# build and upload -----------------------------------------
+
+dist_dir = project_dir / "dist"
+wheel_path = dist_dir / f"kumade-{ku.__version__}-py3-none-any.whl"
+tgz_path = dist_dir / f"kumade-{ku.__version__}.tar.gz"
+built_timestamp_path = dist_dir / f"built_{ku.__version__}"
+
+@ku.task("package.build")
+@ku.depend(wheel_path, tgz_path)
+@ku.help("Build kumade package.")
+def build_package() -> None:
+    pass
+
+@ku.file(wheel_path)
+@ku.depend(built_timestamp_path)
+def create_wheel() -> None:
+    pass
+
+@ku.file(tgz_path)
+@ku.depend(built_timestamp_path)
+def create_tgz() -> None:
+    pass
+
+@ku.file(built_timestamp_path)
+@ku.depend(*python_sources)
+def execute_build() -> None:
+    subprocess.run(["python", "-m", "build"], check=True)
+    built_timestamp_path.touch()
+
+@ku.task("package.upload")
+@ku.depend("package.build")
+@ku.help("Upload kumade package.")
+def upload_package() -> None:
+    subprocess.run(["twine", "upload", str(wheel_path), str(tgz_path)], check=True)
