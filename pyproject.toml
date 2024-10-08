@@ -53,6 +53,3 @@ py_version = "py311"
 
 [[tool.pysen.lint.mypy_targets]]
 paths = ["."]
-
-[tool.pysen.lint.source]
-excludes = ["Kumadefile.py"]
