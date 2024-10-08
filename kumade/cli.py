@@ -92,6 +92,10 @@ class CLI:
         self.__targets = targets
 
     def run(self) -> None:
+        # Enable to import python modules easily from Kumadefile.py
+        base_dir = self.__kumadefile.parent
+        sys.path.append(str(base_dir))
+
         self.__load_kumadefile()
 
         if self.__shows_tasks:

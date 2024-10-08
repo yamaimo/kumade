@@ -1,17 +1,11 @@
 # Example of Kumadefile.py
 
 import subprocess
-import sys
 from pathlib import Path
 from time import sleep
 
 import kumade as ku
-
-# add project dir into PYTHONPATH in order to import module
-project_dir = Path(__file__).parent
-sys.path.append(str(project_dir))
-
-from example_for_import import SomeUsefulTask  # noqa: E402
+from example_for_import import SomeUsefulTask
 
 # demo -----------------------------------------------------
 
