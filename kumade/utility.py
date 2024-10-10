@@ -1,7 +1,7 @@
 # Utility to create and register task
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from kumade.builder import CleanTaskBuilder, FileTaskBuilder
 from kumade.manager import TaskManager
@@ -15,8 +15,8 @@ def set_default(name: str) -> None:
 
 def clean(
     name: str,
-    paths: List[Path],
-    dependencies: Optional[List[TaskName]] = None,
+    paths: list[Path],
+    dependencies: Optional[list[TaskName]] = None,
     help: Optional[str] = None,
 ) -> None:
     builder = CleanTaskBuilder(name)
@@ -32,7 +32,7 @@ def clean(
 
 def directory(
     path: Path,
-    dependencies: Optional[List[TaskName]] = None,
+    dependencies: Optional[list[TaskName]] = None,
 ) -> None:
     builder = FileTaskBuilder(path)
 

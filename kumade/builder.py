@@ -2,18 +2,18 @@
 
 import shutil
 from pathlib import Path
-from typing import Any, List, Optional, Protocol
+from typing import Any, Optional, Protocol
 
 from kumade.task import Task, TaskName, TaskProcedure
 
 
 class ArgsConfigurable(Protocol):
-    def set_args(self, args: List[Any]) -> None:
+    def set_args(self, args: list[Any]) -> None:
         ...  # pragma: no cover
 
 
 class DependenciesConfigurable(Protocol):
-    def set_dependencies(self, dependencies: List[TaskName]) -> None:
+    def set_dependencies(self, dependencies: list[TaskName]) -> None:
         ...  # pragma: no cover
 
 
@@ -25,14 +25,14 @@ class HelpConfigurable(Protocol):
 class TaskBuilder(ArgsConfigurable, DependenciesConfigurable, HelpConfigurable):
     def __init__(self, name: str) -> None:
         self.__name = name
-        self.__args: List[Any] = []
-        self.__dependencies: List[TaskName] = []
+        self.__args: list[Any] = []
+        self.__dependencies: list[TaskName] = []
         self.__help: Optional[str] = None
 
-    def set_args(self, args: List[Any]) -> None:
+    def set_args(self, args: list[Any]) -> None:
         self.__args = args
 
-    def set_dependencies(self, dependencies: List[TaskName]) -> None:
+    def set_dependencies(self, dependencies: list[TaskName]) -> None:
         self.__dependencies = dependencies
 
     def set_help(self, help: str) -> None:
@@ -51,13 +51,13 @@ class TaskBuilder(ArgsConfigurable, DependenciesConfigurable, HelpConfigurable):
 class FileTaskBuilder(ArgsConfigurable, DependenciesConfigurable):
     def __init__(self, path: Path) -> None:
         self.__path = path
-        self.__args: List[Any] = []
-        self.__dependencies: List[TaskName] = []
+        self.__args: list[Any] = []
+        self.__dependencies: list[TaskName] = []
 
-    def set_args(self, args: List[Any]) -> None:
+    def set_args(self, args: list[Any]) -> None:
         self.__args = args
 
-    def set_dependencies(self, dependencies: List[TaskName]) -> None:
+    def set_dependencies(self, dependencies: list[TaskName]) -> None:
         self.__dependencies = dependencies
 
     def build(self, procedure: TaskProcedure) -> Task:
@@ -87,16 +87,16 @@ class FileTaskBuilder(ArgsConfigurable, DependenciesConfigurable):
 class CleanTaskBuilder(DependenciesConfigurable, HelpConfigurable):
     def __init__(self, name: str) -> None:
         self.__name = name
-        self.__dependencies: List[TaskName] = []
+        self.__dependencies: list[TaskName] = []
         self.__help: Optional[str] = None
 
-    def set_dependencies(self, dependencies: List[TaskName]) -> None:
+    def set_dependencies(self, dependencies: list[TaskName]) -> None:
         self.__dependencies = dependencies
 
     def set_help(self, help: str) -> None:
         self.__help = help
 
-    def build(self, clean_paths: List[Path]) -> Task:
+    def build(self, clean_paths: list[Path]) -> Task:
         def clean_procedure(*paths: Path) -> None:
             for path in paths:
                 if path.exists():

@@ -1,6 +1,6 @@
 # Task manager
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 from kumade.task import Task, TaskName
 
@@ -15,7 +15,7 @@ class TaskManager:
         return cls.__instance
 
     def __init__(self) -> None:
-        self.__task: Dict[TaskName, Task] = {}
+        self.__task: dict[TaskName, Task] = {}
         self.__default_task_name: Optional[str] = None
 
     @property
@@ -35,8 +35,8 @@ class TaskManager:
     def find(self, name: TaskName) -> Optional[Task]:
         return self.__task.get(name)
 
-    def get_all_tasks(self) -> List[Task]:
+    def get_all_tasks(self) -> list[Task]:
         return list(self.__task.values())
 
-    def get_tasks_described_with_help(self) -> List[Task]:
+    def get_tasks_described_with_help(self) -> list[Task]:
         return list(filter(lambda task: task.has_help, self.__task.values()))

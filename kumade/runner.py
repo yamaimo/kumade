@@ -1,7 +1,6 @@
 # Task runner
 
 from pathlib import Path
-from typing import List, Set
 
 from kumade.manager import TaskManager
 from kumade.task import Task, TaskName
@@ -12,14 +11,14 @@ class TaskRunner:
         self.__manager = TaskManager.get_instance()
         self.__verbose = verbose
 
-    def run(self, targets: List[TaskName]) -> None:
+    def run(self, targets: list[TaskName]) -> None:
         queue = self.__create_queue(targets)
         self.__execute_queue(queue)
 
-    def __create_queue(self, targets: List[TaskName]) -> List[Task]:
-        queue: List[Task] = []
-        visited: Set[TaskName] = set()
-        added: Set[TaskName] = set()
+    def __create_queue(self, targets: list[TaskName]) -> list[Task]:
+        queue: list[Task] = []
+        visited: set[TaskName] = set()
+        added: set[TaskName] = set()
         for target in targets:
             self.__create_queue_recursively(target, queue, visited, added)
         return queue
@@ -27,9 +26,9 @@ class TaskRunner:
     def __create_queue_recursively(
         self,
         target: TaskName,
-        queue: List[Task],
-        visited: Set[TaskName],
-        added: Set[TaskName],
+        queue: list[Task],
+        visited: set[TaskName],
+        added: set[TaskName],
     ) -> None:
         if target in visited:
             if target in added:
@@ -53,7 +52,7 @@ class TaskRunner:
         queue.append(task)
         added.add(target)
 
-    def __execute_queue(self, queue: List[Task]) -> None:
+    def __execute_queue(self, queue: list[Task]) -> None:
         for task in queue:
             if self.__verbose:
                 print(f"[Task] {task.name}")
