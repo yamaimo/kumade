@@ -4,7 +4,6 @@ import importlib.util
 import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import List, Tuple
 
 import kumade
 from kumade.manager import TaskManager
@@ -82,7 +81,7 @@ class CLI:
         shows_tasks: bool,
         shows_all: bool,
         verbose: bool,
-        targets: List[str],
+        targets: list[str],
     ) -> None:
         self.__manager = manager
         self.__kumadefile = kumadefile
@@ -108,7 +107,7 @@ class CLI:
                 raise RuntimeError("No target is specified.")
             self.__targets.append(default_task_name)
 
-        targets_to_run: List[TaskName] = []
+        targets_to_run: list[TaskName] = []
         for target in self.__targets:
             if self.__manager.find(target):
                 targets_to_run.append(target)
@@ -141,7 +140,7 @@ class CLI:
         len_of_names = [len(str(task.name)) for task in tasks if task.has_help]
         name_width = max(len_of_names) + 2
 
-        def get_sort_key(task: Task) -> Tuple[int, str]:
+        def get_sort_key(task: Task) -> tuple[int, str]:
             if task.has_help:
                 priority = 0
             elif isinstance(task.name, str):

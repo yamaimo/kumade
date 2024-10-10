@@ -1,7 +1,8 @@
 # Decorator to create and register task
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Generic, List, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
 from kumade.builder import (
     ArgsConfigurable,
@@ -85,7 +86,7 @@ def depend(*dependencies: Optional[TaskName]) -> Callable:
     def decorator(
         base: Union[TaskProcedure, TaskConfig[DependenciesConfigurable]]
     ) -> TaskConfig[DependenciesConfigurable]:
-        deps: List[TaskName] = [dep for dep in dependencies if dep is not None]
+        deps: list[TaskName] = [dep for dep in dependencies if dep is not None]
         return TaskConfig(base, lambda builder: builder.set_dependencies(deps))
 
     return decorator
