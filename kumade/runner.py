@@ -7,11 +7,29 @@ from kumade.task import Task, TaskName
 
 
 class TaskRunner:
+    """
+    Task runner.
+    """
+
     def __init__(self, verbose: bool = False) -> None:
+        """
+        Parameters
+        ----------
+        verbose : bool, default False
+            Whether to display the running task name or not.
+        """
         self.__manager = TaskManager.get_instance()
         self.__verbose = verbose
 
     def run(self, targets: list[TaskName]) -> None:
+        """
+        Execute specified tasks with considering dependencies.
+
+        Parameters
+        ----------
+        targets : list[TaskName]
+            Target task names or paths to be executed.
+        """
         queue = self.__create_queue(targets)
         self.__execute_queue(queue)
 
