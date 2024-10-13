@@ -12,8 +12,20 @@ from kumade.task import Task, TaskName
 
 
 class CLI:
+    """
+    Command Line Interface.
+    """
+
     @classmethod
     def create(cls) -> "CLI":
+        """
+        Parse command line arguments and create a CLI instance.
+
+        Returns
+        -------
+        cli : CLI
+            Created CLI instance.
+        """
         option = cls.__parse_args()
 
         if option.file is not None:
@@ -83,6 +95,23 @@ class CLI:
         verbose: bool,
         targets: list[str],
     ) -> None:
+        """
+        Parameters
+        ----------
+        manager : TaskManager
+            Task manager.
+        kumadefile : Path
+            Path of Kumadefile.py.
+        shows_tasks : bool
+            If true, show available task names and exit.
+        shows_all : bool
+            Whether to show all task names or not.
+            If false, only task names with descriptions are shown.
+        verbose : bool
+            Whether to display the running task name or not.
+        targets : list[str]
+            Target task names to be executed.
+        """
         self.__manager = manager
         self.__kumadefile = kumadefile
         self.__shows_tasks = shows_tasks
@@ -91,6 +120,9 @@ class CLI:
         self.__targets = targets
 
     def run(self) -> None:
+        """
+        Run CLI and execute target tasks with considering dependencies.
+        """
         # Enable to import python modules easily from Kumadefile.py
         base_dir = self.__kumadefile.parent
         sys.path.append(str(base_dir))
