@@ -79,7 +79,7 @@ class TestTaskManager(TestCase):
         self.assertIn(task2, all_tasks)
         self.assertIn(task3, all_tasks)
 
-    def test_tasks_described_with_help(self) -> None:
+    def test_get_tasks_described_with_help(self) -> None:
         manager = TaskManager()
 
         task1 = TaskBuilder("task1").build(MagicMock())
