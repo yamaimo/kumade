@@ -6,6 +6,7 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 import kumade
+from kumade.config import Config, ConfigRegistry
 from kumade.manager import TaskManager
 from kumade.runner import TaskRunner
 from kumade.task import Task, TaskName
@@ -38,15 +39,28 @@ class CLI:
         shows_tasks = option.tasks or option.alltasks
         shows_all = option.alltasks
 
+        # Separate config_and_targets into config and targets.
+        config: dict[str, str] = {}
+        targets: list[str] = []
+        for item in option.config_and_targets:
+            if "=" in item:
+                name, value = item.split("=")
+                config[name] = value
+            else:
+                targets.append(item)
+
+        registry = ConfigRegistry.get_instance()
         manager = TaskManager.get_instance()
 
         return cls(
+            registry,
             manager,
             kumadefile,
             shows_tasks,
             shows_all,
             option.verbose,
-            option.targets,
+            config,
+            targets,
         )
 
     @classmethod
@@ -58,16 +72,27 @@ class CLI:
             "-f", "--file", metavar="FILE", help="use FILE as a Kumadefile"
         )
         parser.add_argument(
-            "-t", "--tasks", action="store_true", help="show tasks and exit"
+            "-t",
+            "--tasks",
+            action="store_true",
+            help="show config items and tasks, and exit",
         )
         parser.add_argument(
             "-T",
             "--alltasks",
             action="store_true",
-            help="show all tasks (including no description) and exit",
+            help="show config items and all tasks (including no description), and exit",
         )
         parser.add_argument(
             "-v", "--verbose", action="store_true", help="show task name at running"
+        )
+        # NOTE: All config and targets will be pushed in 'config_and_targets'.
+        # 'targets' is pseudo argument for help message.
+        parser.add_argument(
+            "config_and_targets",
+            nargs="*",
+            help="configurations",
+            metavar="config=value",
         )
         parser.add_argument("targets", nargs="*", help="targets to run")
 
@@ -88,16 +113,20 @@ class CLI:
 
     def __init__(
         self,
+        registry: ConfigRegistry,
         manager: TaskManager,
         kumadefile: Path,
         shows_tasks: bool,
         shows_all: bool,
         verbose: bool,
+        config: dict[str, str],
         targets: list[str],
     ) -> None:
         """
         Parameters
         ----------
+        registry : ConfigRegistry
+            Config registry.
         manager : TaskManager
             Task manager.
         kumadefile : Path
@@ -109,14 +138,18 @@ class CLI:
             If false, only task names with descriptions are shown.
         verbose : bool
             Whether to display the running task name or not.
+        config : dict[str, str]
+            User specified values for configuration items.
         targets : list[str]
             Target task names to be executed.
         """
+        self.__registry = registry
         self.__manager = manager
         self.__kumadefile = kumadefile
         self.__shows_tasks = shows_tasks
         self.__shows_all = shows_all
         self.__verbose = verbose
+        self.__config = config
         self.__targets = targets
 
     def run(self) -> None:
@@ -130,8 +163,12 @@ class CLI:
         self.__load_kumadefile()
 
         if self.__shows_tasks:
+            self.__show_config_items()
             self.__show_tasks()
             return
+
+        confirmed_values = self.__registry.get_confirmed_values(self.__config)
+        Config.set(confirmed_values)
 
         if len(self.__targets) == 0:
             default_task_name = self.__manager.default_task_name
@@ -163,7 +200,29 @@ class CLI:
         assert spec.loader is not None and spec.loader.exec_module is not None
         spec.loader.exec_module(module)
 
+    def __show_config_items(self) -> None:
+        print("Configuration items:")
+
+        items = self.__registry.get_all_items()
+
+        if len(items) == 0:
+            print("  (None)")
+            return
+
+        len_of_names = [len(item.name) for item in items]
+        name_width = max(len_of_names) + 2
+
+        sorted_items = sorted(items, key=lambda item: item.name)
+
+        for item in sorted_items:
+            padding = " " * (name_width - len(item.name))
+            print(
+                f"  {item.name}{padding}# {item.help} (default: {item.default_value})"
+            )
+
     def __show_tasks(self) -> None:
+        print("Tasks:")
+
         if self.__shows_all:
             tasks = self.__manager.get_all_tasks()
         else:
@@ -182,14 +241,15 @@ class CLI:
             return (priority, str(task.name))
 
         sorted_tasks = sorted(tasks, key=get_sort_key)
+
         for task in sorted_tasks:
             if task.has_help:
                 padding = " " * (name_width - len(str(task.name)))
-                print(f"{task.name}{padding}# {task.help}")
+                print(f"  {task.name}{padding}# {task.help}")
             elif isinstance(task.name, str):
-                print(task.name)
+                print(f"  {task.name}")
             else:
-                print(f"(Path) {task.name}")
+                print(f"  (Path) {task.name}")
 
 
 def main() -> None:
