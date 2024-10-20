@@ -114,6 +114,14 @@ To format, execute `kumade format`.
 
 To lint, execute `kumade lint`.
 
+### Unit test
+
+To run unit test, execute `kumade test`.
+
+If you want verbose output, execute `kumade test_verbose=true test`.
+
+If you want to run each test file, execute `kumade test_each=true path/to/test_file.py`
+
 ### Coverage
 
-To measure coverage and report it, execute `kumade report_coverage`.
+To measure coverage and report it, execute `kumade coverage`.
