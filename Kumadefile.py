@@ -6,6 +6,7 @@ from time import sleep
 
 import kumade as ku
 from example_for_import import SomeUsefulTask
+from kumade.runner import TaskRunner
 
 # demo -----------------------------------------------------
 
@@ -81,6 +82,49 @@ def execute_import_example() -> None:
     task.execute()
 
 
+# use config value
+
+ku.add_str_config("name", "Name for greet_to_you task.", default_value="John")
+
+
+@ku.task("greet_to_you")
+@ku.help("Greet to specified name.")
+def greet_to_you() -> None:
+    config = ku.get_config()
+    print(f"Hi, {config.name}!\n" "Enjoy kumae!!")
+
+
+# define tasks using config and run it in task procedure
+
+ku.add_int_config("count", "Number for countdown_with_config task.", default_value=10)
+
+
+@ku.task("countdown_with_config")
+@ku.help("Count down from specified number to 0.")
+def define_countdown_tasks_and_run() -> None:
+    config = ku.get_config()
+
+    for i in range(config.count + 1):
+
+        @ku.task(f"dynamic_count{i}")
+        @ku.depend(f"dynamic_count{i+1}" if i < config.count else None)
+        @ku.bind_args(i)
+        def count(value: int) -> None:
+            if value > 0:
+                print(f"{value}...", end="", flush=True)
+                sleep(1)
+            else:
+                print(f"{value}!")
+
+    @ku.task("dynamic_countdown")
+    @ku.depend("dynamic_count0")
+    def countdown() -> None:
+        pass
+
+    runner = TaskRunner()
+    runner.run(["dynamic_countdown"])
+
+
 # format, lint, and test -----------------------------------
 
 
@@ -96,17 +140,52 @@ def lint() -> None:
     subprocess.run(["pysen", "run", "lint"])
 
 
+ku.add_bool_config(
+    "test_each",
+    "Set true if you want to run each test file.",
+)
+
+ku.add_bool_config(
+    "test_verbose",
+    "Run unit test with verbose output if true.",
+)
+
+
 @ku.task("test")
 @ku.help("Run unittest.")
 def test() -> None:
-    subprocess.run(["python", "-m", "unittest"])
+    config = ku.get_config()
+    if config.test_verbose:
+        subprocess.run(["python", "-m", "unittest", "-v"])
+    else:
+        subprocess.run(["python", "-m", "unittest"])
+
+
+tests_dir = project_dir / "tests"
+for test_path in tests_dir.glob("**/test_*.py"):
+    execute_test_task = f"execute_{test_path}"
+
+    @ku.file(test_path)
+    @ku.depend(execute_test_task)
+    def dummy() -> None:
+        pass
+
+    @ku.task(execute_test_task)
+    @ku.bind_args(test_path)
+    def execute_one_test(path: Path) -> None:
+        config = ku.get_config()
+        if config.test_each:
+            print(f"execute {path.relative_to(project_dir)}")
+            if config.test_verbose:
+                subprocess.run(["python", "-m", "unittest", "-v", str(path)])
+            else:
+                subprocess.run(["python", "-m", "unittest", str(path)])
 
 
 # coverage -------------------------------------------------
 
 coverage_path = project_dir / ".coverage"
 kumade_dir = project_dir / "kumade"
-tests_dir = project_dir / "tests"
 python_sources = list(kumade_dir.glob("**/*.py")) + list(tests_dir.glob("**/*.py"))
 
 
