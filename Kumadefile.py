@@ -96,17 +96,52 @@ def lint() -> None:
     subprocess.run(["pysen", "run", "lint"])
 
 
+ku.add_bool_config(
+    "test_each",
+    "Set true if you want to run each test file.",
+)
+
+ku.add_bool_config(
+    "test_verbose",
+    "Run unit test with verbose output if true.",
+)
+
+
 @ku.task("test")
 @ku.help("Run unittest.")
 def test() -> None:
-    subprocess.run(["python", "-m", "unittest"])
+    config = ku.get_config()
+    if config.test_verbose:
+        subprocess.run(["python", "-m", "unittest", "-v"])
+    else:
+        subprocess.run(["python", "-m", "unittest"])
+
+
+tests_dir = project_dir / "tests"
+for test_path in tests_dir.glob("**/test_*.py"):
+    execute_test_task = f"execute_{test_path}"
+
+    @ku.file(test_path)
+    @ku.depend(execute_test_task)
+    def dummy() -> None:
+        pass
+
+    @ku.task(execute_test_task)
+    @ku.bind_args(test_path)
+    def execute_one_test(path: Path) -> None:
+        config = ku.get_config()
+        if config.test_each:
+            print(f"execute {path.relative_to(project_dir)}")
+            if config.test_verbose:
+                subprocess.run(["python", "-m", "unittest", "-v", str(path)])
+            else:
+                subprocess.run(["python", "-m", "unittest", str(path)])
 
 
 # coverage -------------------------------------------------
 
 coverage_path = project_dir / ".coverage"
 kumade_dir = project_dir / "kumade"
-tests_dir = project_dir / "tests"
 python_sources = list(kumade_dir.glob("**/*.py")) + list(tests_dir.glob("**/*.py"))
 
 
