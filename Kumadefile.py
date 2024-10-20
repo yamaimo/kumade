@@ -6,6 +6,7 @@ from time import sleep
 
 import kumade as ku
 from example_for_import import SomeUsefulTask
+from kumade.runner import TaskRunner
 
 # demo -----------------------------------------------------
 
@@ -79,6 +80,49 @@ ku.clean("clean", [demo_dir], help="Clean demo file.")
 def execute_import_example() -> None:
     task = SomeUsefulTask("example task")
     task.execute()
+
+
+# use config value
+
+ku.add_str_config("name", "Name for greet_to_you task.", default_value="John")
+
+
+@ku.task("greet_to_you")
+@ku.help("Greet to specified name.")
+def greet_to_you() -> None:
+    config = ku.get_config()
+    print(f"Hi, {config.name}!\n" "Enjoy kumae!!")
+
+
+# define tasks using config and run it in task procedure
+
+ku.add_int_config("count", "Number for countdown_with_config task.", default_value=10)
+
+
+@ku.task("countdown_with_config")
+@ku.help("Count down from specified number to 0.")
+def define_countdown_tasks_and_run() -> None:
+    config = ku.get_config()
+
+    for i in range(config.count + 1):
+
+        @ku.task(f"dynamic_count{i}")
+        @ku.depend(f"dynamic_count{i+1}" if i < config.count else None)
+        @ku.bind_args(i)
+        def count(value: int) -> None:
+            if value > 0:
+                print(f"{value}...", end="", flush=True)
+                sleep(1)
+            else:
+                print(f"{value}!")
+
+    @ku.task("dynamic_countdown")
+    @ku.depend("dynamic_count0")
+    def countdown() -> None:
+        pass
+
+    runner = TaskRunner()
+    runner.run(["dynamic_countdown"])
 
 
 # format, lint, and test -----------------------------------
