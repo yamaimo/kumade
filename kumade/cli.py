@@ -1,12 +1,12 @@
 # CLI
 
-import importlib.util
-import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
+from typing import Optional
 
 import kumade
 from kumade.config import Config, ConfigRegistry
+from kumade.loader import KumadefileLoader
 from kumade.manager import TaskManager
 from kumade.runner import TaskRunner
 from kumade.task import Task, TaskName
@@ -34,7 +34,7 @@ class CLI:
             if not kumadefile.exists():
                 raise RuntimeError(f"File {kumadefile} does not exist.")
         else:
-            kumadefile = cls.__search_kumadefile(Path().absolute())
+            kumadefile = None
 
         shows_tasks = option.tasks or option.alltasks
         shows_all = option.alltasks
@@ -49,10 +49,12 @@ class CLI:
             else:
                 targets.append(item)
 
+        loader = KumadefileLoader.get_instance()
         registry = ConfigRegistry.get_instance()
         manager = TaskManager.get_instance()
 
         return cls(
+            loader,
             registry,
             manager,
             kumadefile,
@@ -98,24 +100,12 @@ class CLI:
 
         return parser.parse_args()
 
-    @classmethod
-    def __search_kumadefile(cls, current_dir: Path) -> Path:
-        for filename in ["Kumadefile.py", "kumadefile.py"]:
-            path = current_dir / filename
-            if path.exists():
-                return path
-
-        parent_dir = current_dir.parent
-        if current_dir == parent_dir:
-            raise RuntimeError("Kumadefile.py is not found.")
-        else:
-            return cls.__search_kumadefile(parent_dir)
-
     def __init__(
         self,
+        loader: KumadefileLoader,
         registry: ConfigRegistry,
         manager: TaskManager,
-        kumadefile: Path,
+        kumadefile: Optional[Path],
         shows_tasks: bool,
         shows_all: bool,
         verbose: bool,
@@ -125,11 +115,13 @@ class CLI:
         """
         Parameters
         ----------
+        loader : KumadefileLoader
+            Kumadefile loader.
         registry : ConfigRegistry
             Config registry.
         manager : TaskManager
             Task manager.
-        kumadefile : Path
+        kumadefile : Optional[Path]
             Path of Kumadefile.py.
         shows_tasks : bool
             If true, show available task names and exit.
@@ -143,6 +135,7 @@ class CLI:
         targets : list[str]
             Target task names to be executed.
         """
+        self.__loader = loader
         self.__registry = registry
         self.__manager = manager
         self.__kumadefile = kumadefile
@@ -156,11 +149,7 @@ class CLI:
         """
         Run CLI and execute target tasks with considering dependencies.
         """
-        # Enable to import python modules easily from Kumadefile.py
-        base_dir = self.__kumadefile.parent
-        sys.path.append(str(base_dir))
-
-        self.__load_kumadefile()
+        self.__loader.load(self.__kumadefile)
 
         if self.__shows_tasks:
             self.__show_config_items()
@@ -189,16 +178,6 @@ class CLI:
 
         runner = TaskRunner(self.__verbose)
         runner.run(targets_to_run)
-
-    def __load_kumadefile(self) -> None:
-        # NOTE: https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
-        module_name = "kumadefile"
-        spec = importlib.util.spec_from_file_location(module_name, self.__kumadefile)
-        assert spec is not None
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
-        assert spec.loader is not None and spec.loader.exec_module is not None
-        spec.loader.exec_module(module)
 
     def __show_config_items(self) -> None:
         print("Configuration items:")
