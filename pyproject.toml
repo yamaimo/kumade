@@ -36,8 +36,12 @@ kumade = "kumade.cli:main"
 [tool.setuptools.dynamic]
 version = {attr = "kumade.__version__"}
 
-[tool.setuptools]
-packages = ["kumade"]
+[tool.setuptools.packages.find]
+include = [
+    "kumade",
+    "kumade.*",
+]
+namespaces = false
 
 [tool.pysen]
 version = "0.10"
