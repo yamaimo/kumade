@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import kumade
+from kumade.concurrent.runner import ConcurrentTaskRunner
 from kumade.config import Config, ConfigRegistry
 from kumade.loader import KumadefileLoader
 from kumade.manager import TaskManager
@@ -39,6 +40,10 @@ class CLI:
         shows_tasks = option.tasks or option.alltasks
         shows_all = option.alltasks
 
+        n_workers: Optional[int] = None
+        if option.jobs is not None:
+            n_workers = int(option.jobs)
+
         # Separate config_and_targets into config and targets.
         config: dict[str, str] = {}
         targets: list[str] = []
@@ -60,6 +65,7 @@ class CLI:
             kumadefile,
             shows_tasks,
             shows_all,
+            n_workers,
             option.verbose,
             config,
             targets,
@@ -86,6 +92,12 @@ class CLI:
             help="show config items and all tasks (including no description), and exit",
         )
         parser.add_argument(
+            "-j",
+            "--jobs",
+            metavar="N",
+            help="execute tasks concurrently with N workers",
+        )
+        parser.add_argument(
             "-v", "--verbose", action="store_true", help="show task name at running"
         )
         # NOTE: All config and targets will be pushed in 'config_and_targets'.
@@ -108,6 +120,7 @@ class CLI:
         kumadefile: Optional[Path],
         shows_tasks: bool,
         shows_all: bool,
+        n_workers: Optional[int],
         verbose: bool,
         config: dict[str, str],
         targets: list[str],
@@ -128,6 +141,9 @@ class CLI:
         shows_all : bool
             Whether to show all task names or not.
             If false, only task names with descriptions are shown.
+        n_workers : Optional[int]
+            The number of worker processes.
+            If None or less than 2, no concurrent execution.
         verbose : bool
             Whether to display the running task name or not.
         config : dict[str, str]
@@ -141,6 +157,7 @@ class CLI:
         self.__kumadefile = kumadefile
         self.__shows_tasks = shows_tasks
         self.__shows_all = shows_all
+        self.__n_workers = n_workers
         self.__verbose = verbose
         self.__config = config
         self.__targets = targets
@@ -176,8 +193,12 @@ class CLI:
                 else:
                     raise RuntimeError(f"Unknown target '{target}' is specified.")
 
-        runner = TaskRunner(self.__verbose)
-        runner.run(targets_to_run)
+        if (self.__n_workers is None) or (self.__n_workers < 2):
+            runner = TaskRunner(self.__verbose)
+            runner.run(targets_to_run)
+        else:
+            concurrent_runner = ConcurrentTaskRunner.create(self.__n_workers)
+            concurrent_runner.run(targets_to_run)
 
     def __show_config_items(self) -> None:
         print("Configuration items:")
