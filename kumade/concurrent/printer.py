@@ -3,7 +3,7 @@
 import builtins
 from dataclasses import dataclass
 from multiprocessing import Process, Queue
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass(frozen=True)
@@ -57,7 +57,7 @@ class PrintClient:
         self.__queue = queue
         self.__org_print = None
 
-    def print(self, *objects: list, sep: str = " ", **kwargs: dict) -> None:
+    def print(self, *objects: Any, sep: str = " ", **kwargs: Any) -> None:
         """
         Send a print command.
 
