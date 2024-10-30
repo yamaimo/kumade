@@ -199,7 +199,9 @@ def report_coverage() -> None:
 @ku.file(coverage_path)
 @ku.depend(*python_sources)
 def make_coverage() -> None:
-    subprocess.run(["coverage", "run", "-m", "unittest"])
+    # NOTE: Exclude test Kumadefiles that are copied to temporary directory
+    # and deleted at the end of test.
+    subprocess.run(["coverage", "run", "--omit", "Kumadefile.py", "-m", "unittest"])
     coverage_path.touch()
 
 
