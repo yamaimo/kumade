@@ -29,6 +29,13 @@ class TaskRunner:
         ----------
         targets : list[TaskName]
             Target task names or paths to be executed.
+
+        Raises
+        ------
+        RuntimeError
+            If target has circular dependency.
+            If target is not found.
+            If task execution causes an error.
         """
         queue = self.__create_queue(targets)
         self.__execute_queue(queue)
@@ -74,4 +81,8 @@ class TaskRunner:
         for task in queue:
             if self.__verbose:
                 print(f"[Task] {task.name}")
-            task.run()
+
+            try:
+                task.run()
+            except Exception as e:
+                raise RuntimeError(f"Target {task.name} causes an error.") from e

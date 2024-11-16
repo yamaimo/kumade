@@ -1,8 +1,8 @@
+from collections.abc import Generator
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Generator
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -13,7 +13,7 @@ from kumade.runner import TaskRunner
 
 # to reduce indent
 @contextmanager
-def setup() -> Generator:
+def setup() -> Generator[tuple[TaskManager, StringIO], None, None]:
     manager = TaskManager()
     with patch("kumade.manager.TaskManager.get_instance", return_value=manager):
         with StringIO() as stdout:
@@ -349,6 +349,17 @@ class TestTaskRunner(TestCase):
 
                 checker_a.assert_called_once()
                 checker_out_file.assert_called_once()
+
+    def test_run_error_task(self) -> None:
+        with setup():
+
+            @task("error_task")
+            def raise_error() -> None:
+                raise RuntimeError("Error.")
+
+            runner = TaskRunner()
+            with self.assertRaises(RuntimeError):
+                runner.run(["error_task"])
 
     def test_run_verbose(self) -> None:
         #  [a]--->[b]--->[c]
