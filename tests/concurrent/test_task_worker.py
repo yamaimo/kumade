@@ -6,7 +6,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from kumade.concurrent.printer import PrintClient, PrintCommand
-from kumade.concurrent.runner import TaskCommand, TaskWorker
+from kumade.concurrent.runner import ExecutionResult, TaskCommand, TaskWorker
 from kumade.loader import KumadefileLoader
 from kumade.manager import TaskManager
 
@@ -67,7 +67,7 @@ class TestTaskWorker(TestCase):
 
             # A task completion is notified.
             notification = notify_queue.get()
-            self.assertEqual(notification, TaskCommand("greet"))
+            self.assertEqual(notification, ExecutionResult("greet"))
 
             # "greet" task outputs a string by running.
             output = print_queue.get()
@@ -111,7 +111,7 @@ class TestTaskWorker(TestCase):
             print_client = PrintClient("worker", print_queue)
 
             request_queue: Queue[TaskCommand] = Queue()
-            notify_queue: Queue[TaskCommand] = Queue()
+            notify_queue: Queue[ExecutionResult] = Queue()
 
             worker = TaskWorker(
                 kumadefile, {}, print_client, request_queue, notify_queue
@@ -123,10 +123,11 @@ class TestTaskWorker(TestCase):
             # Execute main in same process.
             worker()
 
+            notification = notify_queue.get()
+            self.assertIsNone(notification.error)
+
         # Unknown task causes RuntimeError
         with setup():
-            kumadefile = ASSETS_DIR / "Kumadefile.py"
-
             print_queue = Queue()
             print_client = PrintClient("worker", print_queue)
 
@@ -140,6 +141,32 @@ class TestTaskWorker(TestCase):
             request_queue.put(TaskCommand("dummy"))
             request_queue.put(TaskCommand.exit())
 
-            with self.assertRaises(RuntimeError):
-                # Execute main in same process.
-                worker()
+            # Execute main in same process.
+            worker()
+
+            notification = notify_queue.get()
+            self.assertIsNotNone(notification.error)
+
+    def test_main_with_error_task(self) -> None:
+        kumadefile = ASSETS_DIR / "concurrent.py"
+
+        # Run task that causes an error
+        with setup():
+            print_queue: Queue[PrintCommand] = Queue()
+            print_client = PrintClient("worker", print_queue)
+
+            request_queue: Queue[TaskCommand] = Queue()
+            notify_queue: Queue[ExecutionResult] = Queue()
+
+            worker = TaskWorker(
+                kumadefile, {}, print_client, request_queue, notify_queue
+            )
+
+            request_queue.put(TaskCommand("error_task"))
+            request_queue.put(TaskCommand.exit())
+
+            # Execute main in same process.
+            worker()
+
+            notification = notify_queue.get()
+            self.assertIsNotNone(notification.error)

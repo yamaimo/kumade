@@ -39,6 +39,23 @@ class TaskCommand:
         return self.target == ""
 
 
+@dataclass(frozen=True)
+class ExecutionResult:
+    """
+    Execution result.
+
+    Attributes
+    ----------
+    target : TaskName
+        Target task name.
+    error : Optional[RuntimeError], default None
+        Error that occurred when executing task.
+    """
+
+    target: TaskName
+    error: Optional[RuntimeError] = None
+
+
 class TaskWorker:
     """
     Task worker.
@@ -106,8 +123,8 @@ class TaskWorker:
                     # because it may be intended for others.
                     self.__request_queue.put(command)
                     return
-                self.__execute_target(manager, command.target)
-                self.__notify_queue.put(command)
+                result = self.__execute_target(manager, command.target)
+                self.__notify_queue.put(result)
 
     def __setup_global_objects(self) -> None:
         # Spawned process doesn't have the task objects (and config values)
@@ -121,19 +138,31 @@ class TaskWorker:
             loader.load(self.__kumadefile)
             Config.set(self.__config_values)
 
-    def __execute_target(self, manager: TaskManager, target: TaskName) -> None:
-        task = manager.find(target)
-        if task is None:
-            # NOTE: A path in dependencies need not be a task.
-            if isinstance(target, Path):
-                return
-            else:
-                raise RuntimeError(f"Target {target} is not found.")
+    def __execute_target(
+        self, manager: TaskManager, target: TaskName
+    ) -> ExecutionResult:
+        try:
+            task = manager.find(target)
+            if task is None:
+                # NOTE: A path in dependencies need not be a task.
+                if isinstance(target, Path):
+                    return ExecutionResult(target)
+                else:
+                    raise RuntimeError(f"Target {target} is not found.")
 
-        if self.__verbose:
-            print(f"[Task] {task.name}")
+            if self.__verbose:
+                print(f"[Task] {task.name}")
 
-        task.run()
+            try:
+                task.run()
+            except Exception as e:
+                raise RuntimeError(f"Target {target} causes an error.") from e
+
+            return ExecutionResult(target)
+        except RuntimeError as e:
+            # Task runner can not show stack trace, so print stack trace here.
+            print(traceback.format_exc())
+            return ExecutionResult(target, e)
 
 
 class ConcurrentTaskRunner:
@@ -171,7 +200,7 @@ class ConcurrentTaskRunner:
         print_server = PrintServer(print_queue)
 
         request_queue: Queue[TaskCommand] = Queue()
-        notify_queue: Queue[TaskCommand] = Queue()
+        notify_queue: Queue[ExecutionResult] = Queue()
 
         workers: list[TaskWorker] = []
         for i in range(n_workers):
@@ -221,13 +250,18 @@ class ConcurrentTaskRunner:
         ----------
         targets : list[TaskName]
             Target task names or paths to be executed.
+
+        Raises
+        ------
+        RuntimeError
+            If target has circular dependency.
+            If target is not found.
+            If task execution causes an error.
         """
         try:
             deps_count = self.__create_dependencies_count(targets)
             self.__start_workers()
             self.__dispatch_tasks(deps_count)
-        except Exception:
-            print(traceback.format_exc())
         finally:
             self.__stop_workers()
 
@@ -293,7 +327,8 @@ class ConcurrentTaskRunner:
         return 1
 
     def __dispatch_tasks(self, deps_count: dict[TaskName, int]) -> None:
-        while len(deps_count) > 0:
+        n_rest_tasks = len(deps_count)
+        while n_rest_tasks > 0:
             # Request non-blocked tasks to run.
             next_deps_count = dict(deps_count)
             for target, count in deps_count.items():
@@ -304,8 +339,11 @@ class ConcurrentTaskRunner:
             deps_count = next_deps_count
 
             # Wait task completion.
-            completed_command = self.__notify_queue.get()
-            completed_target = completed_command.target
+            result = self.__notify_queue.get()
+            if result.error is not None:
+                raise result.error
+            completed_target = result.target
+            n_rest_tasks -= 1
 
             # Update dependencies count.
             for target in deps_count:
