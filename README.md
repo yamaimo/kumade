@@ -11,6 +11,9 @@ Features:
   to determin the task execution order.
 - Kumade decides whether or not to perform a file creation task with considering
   the file existence and whether its timestamp is older than its dependencies.
+- You can add configuration items in `Kumadefile.py`,
+  and specify the values from command line when executing tasks. (v0.2.0 ~)
+- Kumade can execute tasks concurrently using the `-j` option. (v0.3.0 ~)
 
 *Kumade* means rake in Japanese, and it is regarded as a lucky charm
 because it collects happiness.

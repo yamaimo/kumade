@@ -1,4 +1,4 @@
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from kumade.decorator import bind_args, depend, file, help, task
 from kumade.utility import (
