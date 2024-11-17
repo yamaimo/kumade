@@ -1,5 +1,6 @@
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator, Optional
+from typing import Optional
 from unittest import TestCase
 
 from kumade.config import Config
@@ -61,3 +62,10 @@ class TestConfig(TestCase):
         config = Config({"item1": 1, "item2": "test"})
         with self.assertRaises(RuntimeError):
             config.get("item0")
+
+    def test_values(self) -> None:
+        config = Config({"item1": 1, "item2": "test"})
+        values = config.values
+
+        expected = {"item1": 1, "item2": "test"}
+        self.assertDictEqual(values, expected)

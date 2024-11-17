@@ -204,3 +204,8 @@ class Config:
     def __getitem__(self, name: str) -> Any:
         """Alias for get()"""
         return self.get(name)
+
+    @property
+    def values(self) -> dict[str, Any]:
+        """Copy of confirmed configuration values."""
+        return dict(self.__values)
